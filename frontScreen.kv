@@ -1,0 +1,50 @@
+<FrontScreenLayout>:
+    anchor_x: 'center'                              # I think this /is/ centered
+    anchor_y: 'center'
+    
+
+    BoxLayout:
+        #pos: self.parent.pos
+        size: self.parent.size
+        orientation: 'vertical'
+
+        BoxLayout:
+            #size_hint: 0.2,1
+            size:self.parent.size
+            orientation: 'horizontal'
+
+            Label:
+                text: 'Select the file'
+                id: MyLabel
+
+            
+            FileChooserListView:
+                id: filechooser
+                on_selection: selectedFileNameLabel.text = self.selection and self.selection[0] or ''
+        
+        BoxLayout:
+            size:self.parent.size
+            orientation: 'vertical'
+
+            Label:
+                text: "Selected file is : "
+                id: selectedFileNameLabel
+                opacity: 0
+
+            GridLayout:
+                size: self.parent.size
+                cols:3
+
+                Label:
+                    text:""
+                     
+                Button:
+                    text:"SUBMIT"
+                    id: "SubmitButton"
+                    size_hint: None, None
+                    size: 300, 50
+                    on_release: root.InitialAction(filechooser.path, selectedFileNameLabel.text)
+                
+                Label:
+                    text:""
+                   
