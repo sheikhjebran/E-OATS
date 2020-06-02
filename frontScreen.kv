@@ -21,7 +21,7 @@
             
             FileChooserListView:
                 id: filechooser
-                on_selection: OutPutFileLocation.text = self.selection and self.selection[0] or ''
+                on_selection: fileSelectionHiddenLabel.text = self.selection and self.selection[0] or ''
         
         BoxLayout:
             size:self.parent.size
@@ -49,10 +49,12 @@
                     id: "SubmitButton"
                     size: 500, 400
                     size_hint: 1,5
-                    on_release:root.InitialAction(filechooser.path, OutPutFileLocation.text)
+                    on_release:root.InitialAction(filechooser.path, fileSelectionHiddenLabel.text)
                 
                 Label:
+                    id:fileSelectionHiddenLabel
                     text:""
+                    opacity : 0
 
         
         
