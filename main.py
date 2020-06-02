@@ -8,6 +8,7 @@ from kivy.uix.filechooser import FileChooserListView
 from kivy.lang.builder import Builder
 from kivy.uix.widget import Widget
 from kivy.core.window import Window
+from kivy.uix.popup import Popup
 from myExcell import GenerateReport
 import os
 
@@ -18,14 +19,16 @@ Builder.load_file('frontScreen.kv')
 class FrontScreenLayout(Widget):
 
     def InitialAction(self, path, filename):
-        self.ids.selectedFileNameLabel.opacity=1
-        GenerateReport(filename)
+        ResultFileLocation, PriorityTestCase , NonPriorityTestCase = GenerateReport(filename)
         
+        self.ids.OutPutFileLocation.text = "OUTPUT file : " + ResultFileLocation
+        self.ids.PriorityTestCase.text = "PriorityTestCase : " + str(PriorityTestCase)
+        self.ids.NonPriorityTestCase.text = "NonPriorityTestCase : " + str(NonPriorityTestCase)
 
 class MyApp(App):
     def build(self):
-        self.title= "OTG"
-        Window.size = (600, 300)        
+        self.title= "E-OATS 0.1"
+        Window.size = (600,400)        
         return FrontScreenLayout()
 
 
