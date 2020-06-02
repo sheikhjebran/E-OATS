@@ -1,15 +1,16 @@
+#:import Factory kivy.factory.Factory
 <FrontScreenLayout>:
-    anchor_x: 'center'                              # I think this /is/ centered
+    anchor_x: 'center'                              
     anchor_y: 'center'
     
 
     BoxLayout:
-        #pos: self.parent.pos
+        pos: self.parent.pos
         size: self.parent.size
         orientation: 'vertical'
 
         BoxLayout:
-            #size_hint: 0.2,1
+            size_hint: 1,3
             size:self.parent.size
             orientation: 'horizontal'
 
@@ -20,17 +21,22 @@
             
             FileChooserListView:
                 id: filechooser
-                on_selection: selectedFileNameLabel.text = self.selection and self.selection[0] or ''
+                on_selection: OutPutFileLocation.text = self.selection and self.selection[0] or ''
         
         BoxLayout:
             size:self.parent.size
             orientation: 'vertical'
+            
 
             Label:
-                text: "Selected file is : "
-                id: selectedFileNameLabel
-                opacity: 0
-
+                id: OutPutFileLocation
+            
+            Label:
+                id: PriorityTestCase
+            
+            Label:
+                id: NonPriorityTestCase
+        
             GridLayout:
                 size: self.parent.size
                 cols:3
@@ -41,10 +47,13 @@
                 Button:
                     text:"SUBMIT"
                     id: "SubmitButton"
-                    size_hint: None, None
-                    size: 300, 50
-                    on_release: root.InitialAction(filechooser.path, selectedFileNameLabel.text)
+                    size: 500, 400
+                    size_hint: 1,5
+                    on_release:root.InitialAction(filechooser.path, OutPutFileLocation.text)
                 
                 Label:
                     text:""
-                   
+
+        
+        
+           

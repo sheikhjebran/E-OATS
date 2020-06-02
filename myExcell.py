@@ -2,13 +2,16 @@ import pandas as pd
 import random
 import numpy as np
 from math import nan
+import os
 
 
-def extractRowsFromExcell(df, first_sheet_name):
-    try:
-        return df[first_sheet_name]["Browsers"], df[first_sheet_name]["Capacity"],df[first_sheet_name]["Device"], df[first_sheet_name]["Year"],df[first_sheet_name]["OS"],df[first_sheet_name]["Region"], df[first_sheet_name]["HeadQ"]
-    except Exception as error:
-        raise AttributeError("The excell title text is not matching ", error)
+def extractRowsFromExcell(df, first_sheet_name, headerList):
+    columnValues={}
+    for title in headerList:
+        columnValues[title]=df[first_sheet_name][title]
+    
+    return columnValues
+
 
 def getNanValueFromList(myList,i):
     if str(myList[i])=='nan':
@@ -20,6 +23,26 @@ def getNanValueFromList(myList,i):
         return myList[i]
 
 
+def GetExcellHeaders(df, first_sheet_name):
+    return df[first_sheet_name].columns.values.tolist()
+
+
+def getDestinationLocation(fileName):
+    head_tail = os.path.split(fileName) 
+    return head_tail[0]
+
+def getTheCountExcludingNanValue(myList):
+    count =0
+    for i in myList:
+        if str(i)!='nan':
+            count+=1
+    return count
+
+def GetNonPriorityTestCase(headerList, columnValueList):
+    TotalTestCase = 1
+    for head in headerList:
+        TotalTestCase = TotalTestCase * getTheCountExcludingNanValue(columnValueList[head])
+    return TotalTestCase 
 
 def GenerateReport(fileName):
     # YOU MUST PUT sheet_name=None TO READ ALL CSV FILES IN YOUR XLSM FILE
@@ -28,53 +51,48 @@ def GenerateReport(fileName):
     # prints first sheet name or any sheet if you know it's index
     first_sheet_name = list(df.keys())[0]
 
-    Browser, Capacity, Device, Year, OS, Region, HeadQ= extractRowsFromExcell(df, first_sheet_name)
+    #Get the list of headder from the excell
+    headerList = GetExcellHeaders(df, first_sheet_name)
 
-    myFinalList=[]    
+    columnValueList = extractRowsFromExcell(df, first_sheet_name, headerList)
 
-    for i in range(len(Browser)):
-    
-        for internalLoop in range(len(Browser)):
+    #Getting the first Colum, since this shall be used as starting point for the Base Algorith
+    firstColumnFromExcell = columnValueList[headerList[0]]
+
+    myFinalList = []
+    for i in range(len(firstColumnFromExcell)):
+
+        for internalLoop in range(len(firstColumnFromExcell)):
             iteam =[]
-            iteam.append(getNanValueFromList(Browser,i))
-            iteam.append(getNanValueFromList(Capacity,internalLoop))
-            iteam.append(getNanValueFromList(Device,internalLoop))
-            iteam.append(getNanValueFromList(Year, internalLoop))
-            iteam.append(getNanValueFromList(OS,internalLoop))
-            iteam.append(getNanValueFromList(Region,internalLoop))
-            iteam.append(getNanValueFromList(HeadQ,internalLoop))
+            for header in headerList:
+
+                if header == headerList[0]:
+                    iteam.append(getNanValueFromList(firstColumnFromExcell,i))
+                else:
+                    iteam.append(getNanValueFromList(columnValueList[header], internalLoop))
 
             myFinalList.append(iteam)
 
-    newBrowser=[]
-    newCapacity=[]
-    newDevice=[]
-    newYear=[]
-    newOs=[]
-    newRegion=[]
-    newHeadQ=[]
+    NonPriorityTestCase = GetNonPriorityTestCase(headerList, columnValueList)
+        
+    priorityTestcase = len(myFinalList)
+    
 
+    iteamLoopCouinter = 0
+    ExcellResult = {}
+    for header in headerList:
+        iteam = []
+        for singleEntry in myFinalList:
+            iteam.append(singleEntry[iteamLoopCouinter])
+        ExcellResult[header] = iteam
+        iteamLoopCouinter += 1
 
-    for iteam in myFinalList:
-        newBrowser.append(iteam[0])
-        newCapacity.append(iteam[1])
-        newDevice.append(iteam[2])
-        newYear.append(iteam[3])
-        newOs.append(iteam[4])
-        newRegion.append(iteam[5])
-        newHeadQ.append(iteam[6])
+    
+    destinationFolderPath = getDestinationLocation(fileName)
+        
+    finalOutPutPath = os.path.join(destinationFolderPath, "E-OATS_OUTPUT" + "." + "xlsx")
+    
+    df = pd.DataFrame(ExcellResult,columns = headerList)
+    df.to_excel (finalOutPutPath, index = False, header=True)
 
-
-
-    ExcellResult = {
-            'Browser': newBrowser,
-            'Capacity': newCapacity,
-            'Device': newDevice,
-            'Year': newYear,
-            'Os': newOs,
-            'Region': newRegion,
-            'HeadQ': newHeadQ
-            }
-
-    df = pd.DataFrame(ExcellResult, columns = ['Browser', 'Capacity','Device','Year','Os','Region','HeadQ'])
-    df.to_excel (r'OTG_OUTPUT.xlsx', index = False, header=True)
+    return finalOutPutPath, priorityTestcase, NonPriorityTestCase
