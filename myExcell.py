@@ -3,6 +3,8 @@ import random
 import numpy as np
 from math import nan
 import os
+import itertools
+import xlsxwriter
 
 
 def extractRowsFromExcell(df, first_sheet_name, headerList):
@@ -43,6 +45,13 @@ def GetNonPriorityTestCase(headerList, columnValueList):
     for head in headerList:
         TotalTestCase = TotalTestCase * getTheCountExcludingNanValue(columnValueList[head])
     return TotalTestCase 
+
+def getTheActualIteamByRemivingNanFromList(iteamList):
+    tempList = []
+    for i in iteamList:
+        if str(i)!= 'nan':
+            tempList.append(i)
+    return tempList
 
 def GenerateReport(fileName):
     # YOU MUST PUT sheet_name=None TO READ ALL CSV FILES IN YOUR XLSM FILE
@@ -87,12 +96,39 @@ def GenerateReport(fileName):
         ExcellResult[header] = iteam
         iteamLoopCouinter += 1
 
+
+
+
+
+
+    #Code to generate nonPriority TestCase
+    args=[]
+    for head in headerList:
+        args.append(getTheActualIteamByRemivingNanFromList(columnValueList[head]))
+
+    myNonPriorityTestCaseList = []
+    for combination in itertools.product(*args):
+        myNonPriorityTestCaseList.append(list(combination))
+        #print(list(combination))
+    #Combination ends here
     
+
+
+
     destinationFolderPath = getDestinationLocation(fileName)
-        
     finalOutPutPath = os.path.join(destinationFolderPath, "E-OATS_OUTPUT" + "." + "xlsx")
     
-    df = pd.DataFrame(ExcellResult,columns = headerList)
-    df.to_excel (finalOutPutPath, index = False, header=True)
+    
+    df1 = pd.DataFrame(ExcellResult,columns = headerList)
+    df2 = pd.DataFrame(myNonPriorityTestCaseList, columns = headerList)
+
+    # Create a Pandas Excel writer using XlsxWriter as the engine.
+    writer = pd.ExcelWriter(finalOutPutPath, engine='xlsxwriter')
+    
+    #df.to_excel (finalOutPutPath, index = False, header=True)
+    df1.to_excel(writer, sheet_name='PriorityTestCase', index=False, header=True)
+    df2.to_excel(writer, sheet_name='NonPriorityTestCase', index=False, header=True)
+    
+    writer.save()
 
     return finalOutPutPath, priorityTestcase, NonPriorityTestCase
