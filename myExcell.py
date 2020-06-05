@@ -40,32 +40,19 @@ def getTheCountExcludingNanValue(myList):
             count+=1
     return count
 
-def GetNonPriorityTestCase(headerList, columnValueList):
-    TotalTestCase = 1
-    for head in headerList:
-        TotalTestCase = TotalTestCase * getTheCountExcludingNanValue(columnValueList[head])
-    return TotalTestCase 
 
-def getTheActualIteamByRemivingNanFromList(iteamList):
+def getTheActualIteamByRemovingNanFromList(iteamList):
     tempList = []
     for i in iteamList:
         if str(i)!= 'nan':
             tempList.append(i)
     return tempList
 
-def GenerateReport(fileName):
-    # YOU MUST PUT sheet_name=None TO READ ALL CSV FILES IN YOUR XLSM FILE
-    df = pd.read_excel(fileName, sheet_name=None)
 
-    # prints first sheet name or any sheet if you know it's index
-    first_sheet_name = list(df.keys())[0]
 
-    #Get the list of headder from the excell
-    headerList = GetExcellHeaders(df, first_sheet_name)
 
-    columnValueList = extractRowsFromExcell(df, first_sheet_name, headerList)
+def getPriorityTestCase(headerList, columnValueList):
 
-    #Getting the first Colum, since this shall be used as starting point for the Base Algorith
     firstColumnFromExcell = columnValueList[headerList[0]]
 
     myFinalList = []
@@ -82,8 +69,96 @@ def GenerateReport(fileName):
 
             myFinalList.append(iteam)
 
-    NonPriorityTestCase = GetNonPriorityTestCase(headerList, columnValueList)
+    return myFinalList
+
+    
+
+def incrementAiIncrement(aiIncrement, headerList):
+    i=0
+    for keys, values in aiIncrement.items():
+        head, newValue = rollDice(values+i, headerList)
+        aiIncrement[keys]= newValue
+        i+=1
+    
+    return aiIncrement
+
+
+
+def rollDice(number, Dice):
+
+	low = 0
+	high = len(Dice)
+
+	for i in range(1,number+1):
+		low = low +1
+
+		if low >high:
+			low =1
+		
+	return Dice[low-1], low
+
+def DiceInitialisation(headerList):
+    aiIncrement = {}
+    Dice = []
+    i=0
+    for head in headerList:
+        aiIncrement[head]=i
+        Dice.append(i) 
+        i+=1
+    
+    return Dice,aiIncrement
+
+def GenerateReport(fileName):
+    # YOU MUST PUT sheet_name=None TO READ ALL CSV FILES IN YOUR XLSM FILE
+    df = pd.read_excel(fileName, sheet_name=None)
+
+    # prints first sheet name or any sheet if you know it's index
+    first_sheet_name = list(df.keys())[0]
+
+    #Get the list of headder from the excell
+    headerList = GetExcellHeaders(df, first_sheet_name)
+
+    columnValueList = extractRowsFromExcell(df, first_sheet_name, headerList)
+
+    #Getting the first Colum, since this shall be used as starting point for the Base Algorith
+    firstColumnFromExcell = columnValueList[headerList[0]]
+
+    Dice, aiIncrement = DiceInitialisation(headerList)
+
+    myFinalList = []
+    for i in range(len(firstColumnFromExcell)):
+        if i > 1:
+            aiIncrement = incrementAiIncrement(aiIncrement, headerList)
         
+        for internalLoop in range(len(firstColumnFromExcell)):
+                iteam =[]
+                if i == 0:
+                    for header in headerList:
+
+                        if header == headerList[0]:
+
+                            iteam.append(getNanValueFromList(firstColumnFromExcell,i))
+                        else:
+
+                            iteam.append(getNanValueFromList(columnValueList[header], internalLoop))
+                else:
+                    for header in headerList:
+                        if header == headerList[0]:
+
+                            iteam.append(getNanValueFromList(firstColumnFromExcell,i))
+                        else:
+
+                            newIncrement = internalLoop+aiIncrement[header]
+
+                            #rollDice(newIncrement,Dice)
+                            #if newIncrement > len(headerList)-1:
+                            #   newIncrement = 0
+                            key , iteration = rollDice(newIncrement,Dice)
+                            iteam.append(getNanValueFromList(columnValueList[header], key))	            		
+
+                myFinalList.append(iteam)
+
+
     priorityTestcase = len(myFinalList)
     
 
@@ -104,7 +179,7 @@ def GenerateReport(fileName):
     #Code to generate nonPriority TestCase
     args=[]
     for head in headerList:
-        args.append(getTheActualIteamByRemivingNanFromList(columnValueList[head]))
+        args.append(getTheActualIteamByRemovingNanFromList(columnValueList[head]))
 
     myNonPriorityTestCaseList = []
     for combination in itertools.product(*args):
@@ -113,7 +188,7 @@ def GenerateReport(fileName):
     #Combination ends here
     
 
-
+    NonPriorityTestCase = len(myNonPriorityTestCaseList)
 
     destinationFolderPath = getDestinationLocation(fileName)
     finalOutPutPath = os.path.join(destinationFolderPath, "E-OATS_OUTPUT" + "." + "xlsx")
