@@ -1,0 +1,43 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Python application
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        pip install kivy[base] kivy_examples --pre --extra-index-url https://kivy.org/downloads/simple/.
+        pip install ffpyplayer
+        pip install numpy
+        pip install pandas
+        pip install xlsxwriter
+        pip install PyInstaller
+        python -m PyInstaller -y --name E-OATS_Application main.py
+        python -m PyInstaller E-OATS_Application.spec
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        # Artifact name
+        name: Application
+        # A file, directory or wildcard pattern that describes what to upload
+        path: dict/
+    
+  
