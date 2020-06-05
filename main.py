@@ -23,7 +23,7 @@ class FrontScreenLayout(Widget):
         
         self.ids.OutPutFileLocation.text = "OUTPUT file : " + ResultFileLocation
         self.ids.PriorityTestCase.text = "PriorityTestCase : " + str(PriorityTestCase)
-        self.ids.NonPriorityTestCase.text = "NonPriorityTestCase : " + str(NonPriorityTestCase)
+        self.ids.NonPriorityTestCase.text = "NonPriorityTestCase : " + str(NonPriorityTestCase-PriorityTestCase)
 
 class MyApp(App):
     def build(self):

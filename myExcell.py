@@ -202,7 +202,7 @@ def GenerateReport(fileName):
     
     #df.to_excel (finalOutPutPath, index = False, header=True)
     df1.to_excel(writer, sheet_name='PriorityTestCase', index=False, header=True)
-    df2.to_excel(writer, sheet_name='NonPriorityTestCase', index=False, header=True)
+    df2.to_excel(writer, sheet_name='TotalTestCase', index=False, header=True)
     
     writer.save()
 
