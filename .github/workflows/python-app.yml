@@ -34,6 +34,16 @@ jobs:
         python -m PyInstaller --hiddenimport win32timezone -F --name E-OATS_Application --icon Asset\ust_icon.ico main.py
         
         python -m PyInstaller E-OATS_Application.spec
+    - name: Zip Release
+      uses: TheDoctor0/zip-release@v0.3.0
+      with:
+        # Filename for archive
+        filename: Application.zip
+        # Base path for archive files
+        path: /home/runner/work/E-OATS/E-OATS/dist/E-OATS_Application/
+        # Working directory before zipping
+        directory: /home/runner/work/E-OATS/E-OATS/dist/
+      
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v2
       with:
