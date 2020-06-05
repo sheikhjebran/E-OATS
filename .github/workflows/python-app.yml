@@ -30,7 +30,7 @@ jobs:
         pip install pandas
         pip install xlsxwriter
         pip install PyInstaller
-        python -m PyInstaller --name E-OATS_Application main.py
+        python -m PyInstaller -y --name E-OATS_Application main.py
         python -m PyInstaller E-OATS_Application.spec
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v2
