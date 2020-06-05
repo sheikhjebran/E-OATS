@@ -40,9 +40,9 @@ jobs:
         # Filename for archive
         filename: Application.zip
         # Base path for archive files
-        path: /home/runner/work/E-OATS/E-OATS/dist/E-OATS_Application/
+        path: dist/
         # Working directory before zipping
-        directory: /home/runner/work/E-OATS/E-OATS/dist/
+        directory: dist/
       
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v2
