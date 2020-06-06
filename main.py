@@ -30,7 +30,7 @@ class FrontScreenLayout(Widget):
 class MyApp(App):
     def build(self):
         self.title= "E-OATS v0.3"
-        Window.size = (600,600)        
+        Window.size = (600,500)        
         return FrontScreenLayout()
 
 
