@@ -7,203 +7,158 @@ import itertools
 import xlsxwriter
 
 
-def extractRowsFromExcell(df, first_sheet_name, headerList):
-    columnValues={}
-    for title in headerList:
-        columnValues[title]=df[first_sheet_name][title]
+
+class Report:
+
+    PRIORITY_TEST_CASE_COUNT = 0
+    TOTAL_TEST_CASE_COUNT = 0
+    NON_PRIORITY_TEST_CASE_COUNT = 0
+
+    def __init__(self, fileFullPath):
+        self.__filePath = fileFullPath
     
-    return columnValues
-
-
-def getNanValueFromList(myList,i):
-    if str(myList[i])=='nan':
-        while True:
-            x = random.choice(myList)
-            if str(x) !='nan':
-                return x
-    else:
-        return myList[i]
-
-
-def GetExcellHeaders(df, first_sheet_name):
-    return df[first_sheet_name].columns.values.tolist()
-
-
-def getDestinationLocation(fileName):
-    head_tail = os.path.split(fileName) 
-    return head_tail[0]
-
-def getTheCountExcludingNanValue(myList):
-    count =0
-    for i in myList:
-        if str(i)!='nan':
-            count+=1
-    return count
-
-
-def getTheActualIteamByRemovingNanFromList(iteamList):
-    tempList = []
-    for i in iteamList:
-        if str(i)!= 'nan':
-            tempList.append(i)
-    return tempList
-
-
-
-
-def getPriorityTestCase(headerList, columnValueList):
-
-    firstColumnFromExcell = columnValueList[headerList[0]]
-
-    myFinalList = []
-    for i in range(len(firstColumnFromExcell)):
-
-        for internalLoop in range(len(firstColumnFromExcell)):
-            iteam =[]
-            for header in headerList:
-
-                if header == headerList[0]:
-                    iteam.append(getNanValueFromList(firstColumnFromExcell,i))
-                else:
-                    iteam.append(getNanValueFromList(columnValueList[header], internalLoop))
-
-            myFinalList.append(iteam)
-
-    return myFinalList
-
-    
-
-def incrementAiIncrement(aiIncrement, headerList):
-    i=0
-    for keys, values in aiIncrement.items():
-        head, newValue = rollDice(values+i, headerList)
-        aiIncrement[keys]= newValue
-        i+=1
-    
-    return aiIncrement
-
-
-
-def rollDice(number, Dice):
-
-	low = 0
-	high = len(Dice)
-
-	for i in range(1,number+1):
-		low = low +1
-
-		if low >high:
-			low =1
-		
-	return Dice[low-1], low
-
-def DiceInitialisation(headerList):
-    aiIncrement = {}
-    Dice = []
-    i=0
-    for head in headerList:
-        aiIncrement[head]=i
-        Dice.append(i) 
-        i+=1
-    
-    return Dice,aiIncrement
-
-def GenerateReport(fileName):
-    # YOU MUST PUT sheet_name=None TO READ ALL CSV FILES IN YOUR XLSM FILE
-    df = pd.read_excel(fileName, sheet_name=None)
-
-    # prints first sheet name or any sheet if you know it's index
-    first_sheet_name = list(df.keys())[0]
-
-    #Get the list of headder from the excell
-    headerList = GetExcellHeaders(df, first_sheet_name)
-
-    columnValueList = extractRowsFromExcell(df, first_sheet_name, headerList)
-
-    #Getting the first Colum, since this shall be used as starting point for the Base Algorith
-    firstColumnFromExcell = columnValueList[headerList[0]]
-
-    Dice, aiIncrement = DiceInitialisation(headerList)
-
-    myFinalList = []
-    for i in range(len(firstColumnFromExcell)):
-        if i > 1:
-            aiIncrement = incrementAiIncrement(aiIncrement, headerList)
+    def GetExcellHeaders(self):
+        return self.df[self.first_sheet_name].columns.values.tolist()
         
-        for internalLoop in range(len(firstColumnFromExcell)):
-                iteam =[]
-                if i == 0:
-                    for header in headerList:
+    def extractRowsFromExcell(self):
+        columnValues={}
+        for title in self.headerList:
+            columnValues[title]=self.df[self.first_sheet_name][title]
+        
+        return columnValues
 
-                        if header == headerList[0]:
+    def getPriorityTestCase(self,aiIncrement, dice):
+        myFinalList = []
+        for i in range(len(self.firstColumnFromExcell)):
+            if i > 1:
+                aiIncrement = incrementAiIncrement(aiIncrement, self.headerList)
+            
+            for internalLoop in range(len(self.firstColumnFromExcell)):
+                    iteam =[]
+                    if i == 0:
+                        for header in self.headerList:
 
-                            iteam.append(getNanValueFromList(firstColumnFromExcell,i))
-                        else:
+                            if header == self.headerList[0]:
 
-                            iteam.append(getNanValueFromList(columnValueList[header], internalLoop))
-                else:
-                    for header in headerList:
-                        if header == headerList[0]:
+                                iteam.append(self.getNanValueFromList(self.firstColumnFromExcell,i))
+                            else:
+                                iteam.append(self.getNanValueFromList(self.columnValueList[header], internalLoop))
+                    else:
+                        for header in self.headerList:
+                            if header == self.headerList[0]:
 
-                            iteam.append(getNanValueFromList(firstColumnFromExcell,i))
-                        else:
+                                iteam.append(self.getNanValueFromList(self.firstColumnFromExcell,i))
+                            else:
 
-                            newIncrement = internalLoop+aiIncrement[header]
+                                newIncrement = internalLoop+aiIncrement[header]
 
-                            #rollDice(newIncrement,Dice)
-                            #if newIncrement > len(headerList)-1:
-                            #   newIncrement = 0
-                            key , iteration = rollDice(newIncrement,Dice)
-                            iteam.append(getNanValueFromList(columnValueList[header], key))	            		
+                                #rollDice(newIncrement,Dice)
+                                #if newIncrement > len(headerList)-1:
+                                #   newIncrement = 0
+                                key , iteration = self.rollDice(newIncrement,dice)
+                                iteam.append(self.getNanValueFromList(self.columnValueList[header], key))	            		
 
-                myFinalList.append(iteam)
+                    myFinalList.append(iteam)
 
+        return myFinalList
 
-    priorityTestcase = len(myFinalList)
+    def diceInitialisation(self):
+        aiIncrement = {}
+        Dice = []
+        i=0
+        for head in self.headerList:
+            aiIncrement[head]=i
+            Dice.append(i) 
+            i+=1
+        
+        return Dice,aiIncrement
+
+    def getNanValueFromList(self, myList, i):
+        if str(myList[i])=='nan':
+            while True:
+                x = random.choice(myList)
+                if str(x) !='nan':
+                    return x
+        else:
+            return myList[i]
+
+    def rollDice(self, number, Dice):
+        low = 0
+        high = len(Dice)
+
+        for i in range(1,number+1):
+            low = low +1
+
+            if low >high:
+                low =1
+            
+        return Dice[low-1], low
+
     
+    def getTheActualIteamByRemovingNanFromList(self, iteamList):
+        tempList = []
+        for i in iteamList:
+            if str(i)!= 'nan':
+                tempList.append(i)
+        return tempList
 
-    iteamLoopCouinter = 0
-    ExcellResult = {}
-    for header in headerList:
-        iteam = []
-        for singleEntry in myFinalList:
-            iteam.append(singleEntry[iteamLoopCouinter])
-        ExcellResult[header] = iteam
-        iteamLoopCouinter += 1
+    def getNonPriorityTestCase(self):
+        #Code to generate nonPriority TestCase
+        args=[]
+        for head in self.headerList:
+            args.append(self.getTheActualIteamByRemovingNanFromList(self.columnValueList[head]))
 
+        myNonPriorityTestCaseList = []
+        for combination in itertools.product(*args):
+            myNonPriorityTestCaseList.append(list(combination))
+            #print(list(combination))
+        #Combination ends here
 
+        return myNonPriorityTestCaseList
 
+    def getDestinationLocation(self):
+        head_tail = os.path.split(self.__filePath) 
+        return head_tail[0]
 
+    def generateReport(self):
+        self.df = pd.read_excel(self.__filePath, sheet_name=None)
 
+        # prints first sheet name or any sheet if you know it's index
+        self.first_sheet_name = list(self.df.keys())[0]
 
-    #Code to generate nonPriority TestCase
-    args=[]
-    for head in headerList:
-        args.append(getTheActualIteamByRemovingNanFromList(columnValueList[head]))
+        #Get the list of headder from the excell
+        self.headerList = self.GetExcellHeaders()
 
-    myNonPriorityTestCaseList = []
-    for combination in itertools.product(*args):
-        myNonPriorityTestCaseList.append(list(combination))
-        #print(list(combination))
-    #Combination ends here
-    
+        self.columnValueList = self.extractRowsFromExcell()
 
-    NonPriorityTestCase = len(myNonPriorityTestCaseList)
+        #Getting the first Colum, since this shall be used as starting point for the Base Algorith
+        self.firstColumnFromExcell = self.columnValueList[self.headerList[0]]
 
-    destinationFolderPath = getDestinationLocation(fileName)
-    finalOutPutPath = os.path.join(destinationFolderPath, "E-OATS_OUTPUT" + "." + "xlsx")
-    
-    
-    df1 = pd.DataFrame(ExcellResult,columns = headerList)
-    df2 = pd.DataFrame(myNonPriorityTestCaseList, columns = headerList)
+        dice, aiIncrement = self.diceInitialisation()
 
-    # Create a Pandas Excel writer using XlsxWriter as the engine.
-    writer = pd.ExcelWriter(finalOutPutPath, engine='xlsxwriter')
-    
-    #df.to_excel (finalOutPutPath, index = False, header=True)
-    df1.to_excel(writer, sheet_name='PriorityTestCase', index=False, header=True)
-    df2.to_excel(writer, sheet_name='TotalTestCase', index=False, header=True)
-    
-    writer.save()
+        self.priorityTestCase = self.getPriorityTestCase(aiIncrement,dice)
 
-    return finalOutPutPath, priorityTestcase, NonPriorityTestCase
+        self.PRIORITY_TEST_CASE_COUNT = len(self.priorityTestCase)
+        
+        self.nonPriorityTestCase = self.getNonPriorityTestCase()
+
+        self.NON_PRIORITY_TEST_CASE_COUNT = len(self.nonPriorityTestCase)
+        
+
+        destinationFolderPath = self.getDestinationLocation()
+        finalOutputPath = os.path.join(destinationFolderPath, "E-OATS_OUTPUT" + "." + "xlsx")
+        
+        
+        df1 = pd.DataFrame(self.priorityTestCase,columns = self.headerList)
+        df2 = pd.DataFrame(self.nonPriorityTestCase, columns = self.headerList)
+
+        # Create a Pandas Excel writer using XlsxWriter as the engine.
+        writer = pd.ExcelWriter(finalOutputPath, engine='xlsxwriter')
+        
+        #df.to_excel (finalOutPutPath, index = False, header=True)
+        df1.to_excel(writer, sheet_name='PriorityTestCase', index=False, header=True)
+        df2.to_excel(writer, sheet_name='TotalTestCase', index=False, header=True)
+        
+        writer.save()
+
+        return finalOutputPath, self.PRIORITY_TEST_CASE_COUNT, self.NON_PRIORITY_TEST_CASE_COUNT

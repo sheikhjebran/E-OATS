@@ -9,7 +9,7 @@ from kivy.lang.builder import Builder
 from kivy.uix.widget import Widget
 from kivy.core.window import Window
 from kivy.uix.popup import Popup
-from myExcell import GenerateReport
+from myExcell import Report
 import os
 
 
@@ -19,7 +19,8 @@ Builder.load_file('frontScreen.kv')
 class FrontScreenLayout(Widget):
 
     def InitialAction(self, path, filename):
-        ResultFileLocation, PriorityTestCase , NonPriorityTestCase = GenerateReport(filename)
+        report = Report(filename)
+        ResultFileLocation, PriorityTestCase , NonPriorityTestCase = report.generateReport()#GenerateReport(filename)
         
         self.ids.OutPutFileLocation.text = "OUTPUT file : " + ResultFileLocation
         self.ids.PriorityTestCase.text = "PriorityTestCase : " + str(PriorityTestCase)
