@@ -20,16 +20,17 @@ class FrontScreenLayout(Widget):
 
     def InitialAction(self, path, filename):
         report = Report(filename)
-        ResultFileLocation, PriorityTestCase , NonPriorityTestCase = report.generateReport()#GenerateReport(filename)
+        ResultFileLocation, PriorityTestCase , NonPriorityTestCase, TotalTestCaseCount = report.generateReport()#GenerateReport(filename)
         
         self.ids.OutPutFileLocation.text = "OUTPUT file : " + ResultFileLocation
         self.ids.PriorityTestCase.text = "PriorityTestCase : " + str(PriorityTestCase)
-        self.ids.NonPriorityTestCase.text = "NonPriorityTestCase : " + str(NonPriorityTestCase-PriorityTestCase)
+        self.ids.NonPriorityTestCase.text = "NonPriorityTestCase : " + str(NonPriorityTestCase)
+        self.ids.TotalTestCase.text = "TotalTestCase : "+ str(TotalTestCaseCount)
 
 class MyApp(App):
     def build(self):
-        self.title= "E-OATS 0.2"
-        Window.size = (600,400)        
+        self.title= "E-OATS v0.3"
+        Window.size = (600,600)        
         return FrontScreenLayout()
 
 

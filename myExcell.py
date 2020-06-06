@@ -6,7 +6,7 @@ import os
 import itertools
 import xlsxwriter
 
-
+from collections import OrderedDict as od
 
 class Report:
 
@@ -111,23 +111,35 @@ class Report:
                 tempList.append(i)
         return tempList
 
-    def getNonPriorityTestCase(self):
+    def getTotalTestCase(self):
         #Code to generate nonPriority TestCase
         args=[]
         for head in self.headerList:
             args.append(self.getTheActualIteamByRemovingNanFromList(self.columnValueList[head]))
 
-        myNonPriorityTestCaseList = []
+        myTotalTestCaseList = []
         for combination in itertools.product(*args):
-            myNonPriorityTestCaseList.append(list(combination))
+            myTotalTestCaseList.append(list(combination))
             #print(list(combination))
         #Combination ends here
 
-        return myNonPriorityTestCaseList
+        return myTotalTestCaseList
 
     def getDestinationLocation(self):
         head_tail = os.path.split(self.__filePath) 
         return head_tail[0]
+
+    def validateTheDataFrame(self, rowDictionary, df):
+
+        flag = False
+        for row in df.itertuples(index=False):
+            if row == rowDictionary:
+                flag=True
+                break
+        
+        if flag!=True:
+            self.nonPriorityTestCaseDataList.append(list(rowDictionary))
+            
 
     def generateReport(self):
         self.df = pd.read_excel(self.__filePath, sheet_name=None)
@@ -149,9 +161,9 @@ class Report:
 
         self.PRIORITY_TEST_CASE_COUNT = len(self.priorityTestCase)
         
-        self.nonPriorityTestCase = self.getNonPriorityTestCase()
+        self.totalTestCase = self.getTotalTestCase()
 
-        self.NON_PRIORITY_TEST_CASE_COUNT = len(self.nonPriorityTestCase)
+        self.TOTAL_TEST_CASE_COUNT = len(self.totalTestCase)
         
 
         destinationFolderPath = self.getDestinationLocation()
@@ -159,15 +171,27 @@ class Report:
         
         
         df1 = pd.DataFrame(self.priorityTestCase,columns = self.headerList)
-        df2 = pd.DataFrame(self.nonPriorityTestCase, columns = self.headerList)
+        df3 = pd.DataFrame(self.totalTestCase, columns = self.headerList)
+
+
+      
+        self.nonPriorityTestCaseDataList=[]
+        for row in df3.itertuples(index=False):
+            self.validateTheDataFrame(row,df1)
+        
+        df2 = pd.DataFrame(self.nonPriorityTestCaseDataList, columns = self.headerList)
+
+        self.NON_PRIORITY_TEST_CASE_COUNT = len(self.nonPriorityTestCaseDataList)
 
         # Create a Pandas Excel writer using XlsxWriter as the engine.
         writer = pd.ExcelWriter(finalOutputPath, engine='xlsxwriter')
         
         #df.to_excel (finalOutPutPath, index = False, header=True)
         df1.to_excel(writer, sheet_name='PriorityTestCase', index=False, header=True)
-        df2.to_excel(writer, sheet_name='TotalTestCase', index=False, header=True)
+        df2.to_excel(writer, sheet_name='NonPriorityTestCase', index=False, header=True)
+        df3.to_excel(writer, sheet_name='TotalTestCase', index=False, header=True)
+       
         
         writer.save()
 
-        return finalOutputPath, self.PRIORITY_TEST_CASE_COUNT, self.NON_PRIORITY_TEST_CASE_COUNT
+        return finalOutputPath, self.PRIORITY_TEST_CASE_COUNT, self.NON_PRIORITY_TEST_CASE_COUNT, self.TOTAL_TEST_CASE_COUNT
