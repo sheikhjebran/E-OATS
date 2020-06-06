@@ -27,11 +27,20 @@ class Report:
         
         return columnValues
 
+    def incrementAiIncrement(self, aiIncrement, headerList):
+        i=0
+        for keys, values in aiIncrement.items():
+            head, newValue = self.rollDice(values+i, headerList)
+            aiIncrement[keys]= newValue
+            i+=1
+        
+        return aiIncrement
+
     def getPriorityTestCase(self,aiIncrement, dice):
         myFinalList = []
         for i in range(len(self.firstColumnFromExcell)):
             if i > 1:
-                aiIncrement = incrementAiIncrement(aiIncrement, self.headerList)
+                aiIncrement = self.incrementAiIncrement(aiIncrement, self.headerList)
             
             for internalLoop in range(len(self.firstColumnFromExcell)):
                     iteam =[]
