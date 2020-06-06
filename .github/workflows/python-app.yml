@@ -34,8 +34,7 @@ jobs:
         python -m PyInstaller --hiddenimport win32timezone -F --name E-OATS_Application --icon Asset\ust_icon.ico main.py
         
         python -m PyInstaller E-OATS_Application.spec
-    - name: Zip Folder
-      run: zip -r dist.zip
+
       
     
   
