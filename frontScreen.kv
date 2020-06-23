@@ -27,6 +27,14 @@
             size:self.parent.size
             orientation: 'vertical'
             
+            ProgressBar: 
+                value: 0
+                min: 0
+                opacity:0
+                max: 1
+                pos_hint: {'x':.1} 
+                size_hint_x: .8
+                id: ProgressBar
 
             Label:
                 id: OutPutFileLocation

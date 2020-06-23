@@ -5,8 +5,13 @@ from math import nan
 import os
 import itertools
 import xlsxwriter
-
+import threading
+import logging
+import time
+from enum import Enum
 from collections import OrderedDict as od
+import value
+
 
 class Report:
 
@@ -16,6 +21,12 @@ class Report:
 
     def __init__(self, fileFullPath):
         self.__filePath = fileFullPath
+        self.STAGE_1 = Status.PENDING
+        self.STAGE_2 = Status.PENDING
+        self.STAGE_3 = Status.PENDING
+        format = "%(asctime)s: %(message)s"
+        logging.basicConfig(format=format, level=logging.INFO,
+                        datefmt="%H:%M:%S")
     
     def GetExcellHeaders(self):
         return self.df[self.first_sheet_name].columns.values.tolist()
@@ -61,15 +72,26 @@ class Report:
 
                                 newIncrement = internalLoop+aiIncrement[header]
 
-                                #rollDice(newIncrement,Dice)
-                                #if newIncrement > len(headerList)-1:
-                                #   newIncrement = 0
                                 key , iteration = self.rollDice(newIncrement,dice)
                                 iteam.append(self.getNanValueFromList(self.columnValueList[header], key))	            		
 
                     myFinalList.append(iteam)
 
-        return myFinalList
+        
+        self.priorityTestCase = myFinalList
+        self.PRIORITY_TEST_CASE_COUNT = len(self.priorityTestCase)
+        self.STAGE_1 = Status.COMPLETE
+        logging.info("Thread %s: finishing", "ProrityTestCase")
+        value.ProgressBarValue = 0.25
+        
+        
+
+    def excellWriter(self ,df ,writer ,sheetName):
+        value.MessageText = "Adding Data to : " + sheetName 
+        logging.info("Writing to Excell for sheet %s Started", sheetName)
+        df.to_excel(writer, sheet_name=sheetName, index=False, header=True)
+        logging.info("Writing to Excell for sheet %s Finished", sheetName)
+        value.MessageText = "Entries added to : " + sheetName 
 
     def diceInitialisation(self):
         aiIncrement = {}
@@ -123,7 +145,12 @@ class Report:
             #print(list(combination))
         #Combination ends here
 
-        return myTotalTestCaseList
+        #return myTotalTestCaseList
+        self.totalTestCase = myTotalTestCaseList
+        self.TOTAL_TEST_CASE_COUNT = len(self.totalTestCase)
+        self.STAGE_2 = Status.COMPLETE
+        logging.info("Thread %s: finishing", "TotalTestCase")
+        value.ProgressBarValue = 0.50
 
     def getDestinationLocation(self):
         head_tail = os.path.split(self.__filePath) 
@@ -142,6 +169,7 @@ class Report:
             
 
     def generateReport(self):
+        value.MessageText = "Reading File "
         self.df = pd.read_excel(self.__filePath, sheet_name=None)
 
         # prints first sheet name or any sheet if you know it's index
@@ -157,24 +185,40 @@ class Report:
 
         dice, aiIncrement = self.diceInitialisation()
 
-        self.priorityTestCase = self.getPriorityTestCase(aiIncrement,dice)
-
-        self.PRIORITY_TEST_CASE_COUNT = len(self.priorityTestCase)
+        threads = list()
         
-        self.totalTestCase = self.getTotalTestCase()
+        value.MessageText = "Generating PriorityTestCase"
+        logging.info("Main    : create and start thread %s.", "PriorityTestCase")
+        myThread = threading.Thread(target=self.getPriorityTestCase, args=(aiIncrement,dice,))
+        threads.append(myThread)
+        myThread.start()
 
-        self.TOTAL_TEST_CASE_COUNT = len(self.totalTestCase)
+        
+        value.MessageText = "Generating TotalTestCase"
+        logging.info("Main    : create and start thread %s.", "TotalTestCase")
+        myThread = threading.Thread(target=self.getTotalTestCase)
+        threads.append(myThread)
+        myThread.start()
+
+     
         
 
         destinationFolderPath = self.getDestinationLocation()
         finalOutputPath = os.path.join(destinationFolderPath, "E-OATS_OUTPUT" + "." + "xlsx")
         
         
+  
+        for index, thread in enumerate(threads):
+            logging.info("Main    : before joining thread %d.", index)
+            thread.join()
+            logging.info("Main    : thread %d done", index)
+
+
         df1 = pd.DataFrame(self.priorityTestCase,columns = self.headerList)
         df3 = pd.DataFrame(self.totalTestCase, columns = self.headerList)
 
 
-      
+        value.MessageText = "Generating NonPriorityTestCase"
         self.nonPriorityTestCaseDataList=[]
         for row in df3.itertuples(index=False):
             self.validateTheDataFrame(row,df1)
@@ -184,14 +228,42 @@ class Report:
         self.NON_PRIORITY_TEST_CASE_COUNT = len(self.nonPriorityTestCaseDataList)
 
         # Create a Pandas Excel writer using XlsxWriter as the engine.
+        value.MessageText = "Creating OutPut File "
         writer = pd.ExcelWriter(finalOutputPath, engine='xlsxwriter')
         
+        value.ProgressBarValue = 0.75
         #df.to_excel (finalOutPutPath, index = False, header=True)
-        df1.to_excel(writer, sheet_name='PriorityTestCase', index=False, header=True)
-        df2.to_excel(writer, sheet_name='NonPriorityTestCase', index=False, header=True)
-        df3.to_excel(writer, sheet_name='TotalTestCase', index=False, header=True)
-       
+
         
-        writer.save()
+        myThread = threading.Thread(target=self.excellWriter, args=(df1,writer,"PriorityTestCase",))
+        threads.append(myThread)
+        myThread.start()
+
+        myThread = threading.Thread(target=self.excellWriter, args=(df2,writer,"NonPriorityTestCase",))
+        threads.append(myThread)
+        myThread.start()
+
+        myThread = threading.Thread(target=self.excellWriter, args=(df3,writer,"TotalTestCase",))
+        threads.append(myThread)
+        myThread.start()
+
+        value.ProgressBarValue = 0.90
+
+        for index, thread in enumerate(threads):
+            logging.info("Main    : before joining thread %d.", index)
+            thread.join()
+            logging.info("Main    : thread %d done", index)
+    
+        myThread = threading.Thread(target=self.savingExcell, args=(writer,))
+        threads.append(myThread)
+        myThread.start()
+        
+
+        value.ProgressBarValue = 1
 
         return finalOutputPath, self.PRIORITY_TEST_CASE_COUNT, self.NON_PRIORITY_TEST_CASE_COUNT, self.TOTAL_TEST_CASE_COUNT
+
+    def savingExcell(self, writer):
+        value.MessageText = "Saving The Excell"
+        writer.save()
+        value.MessageText = "Completed all TASK .... !"
